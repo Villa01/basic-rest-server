@@ -1,44 +1,77 @@
 
 const { response, request } = require('express');
+const { encrypt } = require('../helpers/encryption');
 
-const getUsers = (req = request, res = response) => {
+const User = require('../models/user');
 
-    const { q, name, apiKey, page = 1, limit = 100} = req.query;
+
+const getUsers = async (req = request, res = response) => {
+
+    // const { q, name, apiKey, page = 1, limit = 100} = req.query;
+
+    const { limit = 5, from = 0 } = req.query;
+
+    const query = { state: true };
+
+    const [total, users] = await Promise.all([
+        User.countDocuments(query),
+        User.find(query)
+            .skip(Number(from))
+            .limit(Number(limit)),
+    ]);
 
     res.json({
-        msg: 'get api',
-        q,
-        name,
-        apiKey,
-        limit,
-        page
+        total,
+        users
     });
 }
 
-const putUsers = (req = request, res = response) => {
+const putUsers = async (req = request, res = response) => {
 
     const id = req.params.id;
 
-    res.status(400).json({
-        msg: 'put api',
-        id
-    });
+    const { _id, password, google, ...toModify } = req.body;
+
+
+    if (password) {
+        toModify.password = encrypt(password)
+    }
+
+    const user = await User.findByIdAndUpdate(id, toModify);
+
+    res.status(200).json(user);
 }
 
-const postUsers = (req = request, res = response) => {
+const postUsers = async (req = request, res = response) => {
 
-    const {name, age} = req.body;
+    const { name, email, password, role } = req.body;
+
+    const user = new User({ name, email, password, role });
+
+    // Encrypt password
+    user.password = encrypt(password)
+
+    // Save on DB
+    await user.save();
 
     res.status(201).json({
         msg: 'post api',
-        name, 
-        age
+        user
     });
 }
 
-const deleteUsers = (req = request, res = response) => {
+const deleteUsers = async (req = request, res = response) => {
+
+    const { id } = req.params;
+
+    // Delete physically 
+    //const user = await User.findByIdAndDelete( id );
+
+    const user = await User.findByIdAndUpdate(id, { state: false });
+
     res.json({
-        msg: 'delete api',
+        msg: 'User deleted',
+        user
     });
 }
 
