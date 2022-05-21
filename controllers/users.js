@@ -69,10 +69,7 @@ const deleteUsers = async (req = request, res = response) => {
 
     const user = await User.findByIdAndUpdate(id, { state: false });
 
-    res.json({
-        msg: 'User deleted',
-        user
-    });
+    res.status(200).json(user);
 }
 
 const patchUsers = (req = request, res = response) => {
