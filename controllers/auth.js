@@ -1,37 +1,38 @@
 const { response } = require("express");
 const { compareEncrypted } = require("../helpers/encryption");
 const generateJWT = require("../helpers/generate-jwt");
+const { googleVerify } = require("../helpers/google-verify");
 const User = require('../models/user');
 
 
-const login = async(req, res = response) => {
+const login = async (req, res = response) => {
 
     const { email, password } = req.body;
 
-    try { 
+    try {
 
         // Verify if email exists
 
         const user = await User.findOne({ email });
 
-        if ( !user ) {
+        if (!user) {
             return res.status(400).json({
-                msg : 'User / Password are not correct - email'
+                msg: 'User / Password are not correct - email'
             })
         }
 
         // User is active
 
-        if ( !user.state ) {
+        if (!user.state) {
             return res.status(400).json({
-                msg : 'User / Password are not correct - state: false'
+                msg: 'User / Password are not correct - state: false'
             })
         }
 
         // Verify password
         if (!compareEncrypted(password, user.password)) {
             return res.status(400).json({
-                msg : 'User / Password are not correct - password'
+                msg: 'User / Password are not correct - password'
             })
         }
 
@@ -55,6 +56,53 @@ const login = async(req, res = response) => {
 }
 
 
+const googleSignIn = async (req, res = response) => {
+    const { id_token } = req.body;
+
+    try {
+        const { name, img, email } = await googleVerify(id_token);
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create user
+            const data = {
+                name,
+                email,
+                password: 'PLACEHOLDER',
+                img,
+                role: 'USER_ROLE',
+                google: true
+            }
+
+            user = new User(data);
+            await user.save();
+        }
+
+        if (!user.state) {
+            return res.status(401).json({
+                msg: `User not active, talk to the platform's administrator`
+            })
+        }
+
+        // Generate JWT
+        const token = await generateJWT(user.id);
+
+        res.json({
+            user,
+            token
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(400).json({
+            msg: 'Cannot verify with google sing in'
+        })
+    }
+
+
+}
+
 module.exports = {
-    login
+    login,
+    googleSignIn
 }
