@@ -35,12 +35,12 @@ const validateJWT = async (req, res = response, next) => {
                 msg: 'Not a valid token - not active user'
             })
         }
-
+        // const { _id, ...userUID } = user;
+        // userUID.uid = _id;
         req.user = user;
 
         next();
     } catch (error) {
-        console.log(error);
         res.status(401).json({
             msg: 'Not a valid token'
         })

@@ -14,7 +14,9 @@ const getUsers = async (req = request, res = response) => {
     const query = { state: true };
 
     const [total, users] = await Promise.all([
-        User.countDocuments(query),
+        User.countDocuments(query)
+            .skip(Number(from))
+            .limit(Number(limit)),
         User.find(query)
             .skip(Number(from))
             .limit(Number(limit)),
@@ -37,7 +39,7 @@ const putUsers = async (req = request, res = response) => {
         toModify.password = encrypt(password)
     }
 
-    const user = await User.findByIdAndUpdate(id, toModify);
+    const user = await User.findByIdAndUpdate(id, toModify, { new: true });
 
     res.status(200).json(user);
 }
