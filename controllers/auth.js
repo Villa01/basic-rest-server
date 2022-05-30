@@ -1,7 +1,5 @@
 const { response } = require("express");
-const { compareEncrypted } = require("../helpers/encryption");
-const generateJWT = require("../helpers/generate-jwt");
-const { googleVerify } = require("../helpers/google-verify");
+const { compareEncrypted, googleVerify, generateJWT } = require("../helpers");
 const User = require('../models/user');
 
 
