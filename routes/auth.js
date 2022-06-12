@@ -4,8 +4,8 @@ const { check } = require('express-validator');
 
 
 
-const { login, googleSignIn } = require('../controllers/auth');
-const validateAtributes = require('../middlewares/validate-attributes');
+const { login, googleSignIn, renewToken } = require('../controllers/auth');
+const { validateJWT, validateAtributes } = require('../middlewares');
 
 const router = Router();
 
@@ -21,5 +21,7 @@ router.post('/google', [
     validateAtributes
 ],
 googleSignIn);
+
+router.get('/', validateJWT, renewToken);
 
 module.exports = router; 
